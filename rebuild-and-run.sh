@@ -18,7 +18,7 @@ elif [ "$CONTAINER_STATUS" = "exited" ] || [ "$CONTAINER_STATUS" = "created" ]; 
   docker start "$MSSQL_CONTAINER"
   echo "   等待 MSSQL 就緒..."
   for i in {1..30}; do
-    if docker exec "$MSSQL_CONTAINER" /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'cecyu.tw@NDMC7953' -Q "SELECT 1" &>/dev/null; then
+    if docker exec "$MSSQL_CONTAINER" /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "${MSSQL_SA_PASSWORD:?請設定 MSSQL_SA_PASSWORD 環境變數}" -Q "SELECT 1" &>/dev/null; then
       break
     fi
     sleep 2
