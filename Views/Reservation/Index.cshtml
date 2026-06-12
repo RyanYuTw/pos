@@ -1,0 +1,97 @@
+@model IEnumerable<Pos.Models.Reservation>
+@{ ViewData["Title"] = "訂位管理"; }
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0"><i class="bi bi-calendar-check"></i> 訂位管理</h5>
+    <a asp-action="Create" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus"></i> 新增訂位
+    </a>
+</div>
+
+<!-- 日期選擇 -->
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-auto">
+        <label class="form-label small mb-1">查詢日期</label>
+        <input type="date" name="date" class="form-control"
+               value="@ViewBag.Date?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-primary">查詢</button>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info"><i class="bi bi-info-circle"></i> 此日無訂位資料</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>訂位號</th>
+                    <th>訂位日期</th>
+                    <th>時間</th>
+                    <th>聯絡人</th>
+                    <th>電話</th>
+                    <th>桌號</th>
+                    <th>人數</th>
+                    <th>備註</th>
+                    <th>狀態</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td class="font-monospace small">@r.No</td>
+                        <td>@r.BookDate.ToString("MM/dd")</td>
+                        <td>@r.BookTime.ToString("HH:mm")</td>
+                        <td>@r.Contact</td>
+                        <td>@r.Phone</td>
+                        <td>@(r.TableNo ?? "-")</td>
+                        <td>@(r.Attendance?.ToString("N0") ?? "-")</td>
+                        <td class="small text-muted" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">@r.Memo</td>
+                        <td>
+                            @if (r.Status == "0")
+                            {
+                                <span class="badge bg-primary">待入座</span>
+                            }
+                            else if (r.Status == "1")
+                            {
+                                <span class="badge bg-success">已入座</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">已取消</span>
+                            }
+                        </td>
+                        <td class="text-nowrap">
+                            @if (r.Status == "0")
+                            {
+                                <form asp-action="CheckIn" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@r.No" />
+                                    <button type="submit" class="btn btn-sm btn-success py-0">入座</button>
+                                </form>
+                            }
+                            <a asp-action="Edit" asp-route-id="@r.No"
+                               class="btn btn-sm btn-outline-secondary py-0">編輯</a>
+                            @if (r.Status == "0")
+                            {
+                                <form asp-action="Delete" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@r.No" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger py-0"
+                                            onclick="return confirm('確定取消此訂位？')">取消</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

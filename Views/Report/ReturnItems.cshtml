@@ -1,0 +1,71 @@
+@model IEnumerable<Pos.Models.Orders>
+@{ ViewData["Title"] = "退貨明細"; }
+
+<h5 class="mb-3"><i class="bi bi-arrow-counterclockwise"></i> 退貨明細</h5>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-auto">
+        <label class="form-label small mb-1">開始日期</label>
+        <input type="date" name="startDate" class="form-control form-control-sm"
+               value="@ViewBag.StartDate?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-auto">
+        <label class="form-label small mb-1">結束日期</label>
+        <input type="date" name="endDate" class="form-control form-control-sm"
+               value="@ViewBag.EndDate?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-primary btn-sm">查詢</button>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">此區間無退貨資料</div>
+}
+else
+{
+    @foreach (var order in Model)
+    {
+        <div class="card shadow-sm mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <span class="font-monospace small">單號 @order.No</span>
+                <span class="text-muted small">@order.OrderDate.ToString("yyyy/MM/dd HH:mm") | 桌號 @order.TableNo</span>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>商品</th>
+                            <th class="text-end">數量</th>
+                            <th class="text-end">金額</th>
+                            <th>狀態</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{var idx = 1;}
+                        @foreach (var d in order.Details)
+                        {
+                            <tr class="@(d.Status == "R" ? "table-warning" : "")">
+                                <td>@idx</td>
+                                <td>@d.ProductNo</td>
+                                <td class="text-end">@d.Amount</td>
+                                <td class="text-end">$@(((d.DiscountPrice ?? 0) * d.Amount).ToString("N0"))</td>
+                                <td>
+                                    @if (d.Status == "R")
+                                    { <span class="badge bg-warning text-dark">已退</span> }
+                                    else if (d.Status == "2")
+                                    { <span class="badge bg-secondary">已刪</span> }
+                                    else
+                                    { <span class="badge bg-success">正常</span> }
+                                </td>
+                            </tr>
+                            idx++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+}

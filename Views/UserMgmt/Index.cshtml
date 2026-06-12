@@ -1,0 +1,68 @@
+@model IEnumerable<Pos.Models.User>
+@{ ViewData["Title"] = "使用者管理"; }
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0"><i class="bi bi-people"></i> 使用者管理</h5>
+    <a asp-action="Create" class="btn btn-primary btn-sm">
+        <i class="bi bi-person-plus"></i> 新增使用者
+    </a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col">
+        <input type="text" name="q" class="form-control form-control-sm"
+               placeholder="搜尋帳號或姓名…" value="@Context.Request.Query["q"]" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-primary btn-sm">搜尋</button>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>帳號</th>
+                <th>姓名</th>
+                <th>員工編號</th>
+                <th>群組</th>
+                <th>狀態</th>
+                <th>更新</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in Model)
+            {
+                <tr>
+                    <td class="font-monospace">@u.UserId</td>
+                    <td>@u.Name</td>
+                    <td>@u.EmployeeNo</td>
+                    <td>@u.UserGroup</td>
+                    <td>
+                        @if (u.Status == "0")
+                        { <span class="badge bg-success">正常</span> }
+                        else if (u.Status == "1")
+                        { <span class="badge bg-warning text-dark">已修改</span> }
+                        else
+                        { <span class="badge bg-secondary">停用</span> }
+                    </td>
+                    <td class="small text-muted">@u.UpdateTime.ToString("MM/dd")</td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@u.UserId"
+                           class="btn btn-sm btn-outline-secondary py-0">編輯</a>
+                        @if (u.UserId != User.Identity!.Name)
+                        {
+                            <form asp-action="Delete" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@u.UserId" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger py-0"
+                                        onclick="return confirm('確定停用使用者「@u.Name」？')">停用</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

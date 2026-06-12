@@ -1,0 +1,131 @@
+@model Pos.Models.Orders
+@{
+    ViewData["Title"] = $"消費明細 - {Model.TableNo}";
+    var productNames = (Dictionary<string, string>)ViewBag.ProductNames;
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">
+                <i class="bi bi-receipt"></i> 消費明細
+                <span class="badge bg-warning text-dark ms-2">桌號 @Model.TableNo</span>
+            </h5>
+            <span class="text-muted small">單號 @Model.No</span>
+        </div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>商品</th>
+                            <th class="text-end">單價</th>
+                            <th class="text-end">數量</th>
+                            <th class="text-end">小計</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{var idx = 1;}
+                        @foreach (var d in Model.Details.Where(d => d.Status != "2"))
+                        {
+                            <tr class="@(d.Status == "R" ? "table-warning" : d.Status == "S" ? "table-success" : "")">
+                                <td>@idx</td>
+                                <td>
+                                    @(productNames.TryGetValue(d.ProductNo, out var pname) ? pname : d.ProductNo)
+                                    @if (d.Status == "S") { <span class="badge bg-success ms-1">已出餐</span> }
+                                    @if (d.Status == "R") { <span class="badge bg-warning ms-1">退餐</span> }
+                                </td>
+                                <td class="text-end">$@(d.DiscountPrice?.ToString("N0") ?? d.Discount?.ToString("N0"))</td>
+                                <td class="text-end">@d.Amount</td>
+                                <td class="text-end">$@(((d.DiscountPrice ?? 0) * d.Amount).ToString("N0"))</td>
+                                <td class="text-end">
+                                    @if (d.Status == "0")
+                                    {
+                                        <form asp-action="Serve" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="orderNo" value="@Model.No" />
+                                            <input type="hidden" name="serialNo" value="@d.SerialNo" />
+                                            <button class="btn btn-sm btn-outline-success py-0">出餐</button>
+                                        </form>
+                                        <form asp-action="RemoveItem" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="orderNo" value="@Model.No" />
+                                            <input type="hidden" name="serialNo" value="@d.SerialNo" />
+                                            <button class="btn btn-sm btn-outline-danger py-0"
+                                                    onclick="return confirm('確定退餐此項目？')">退餐</button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                            idx++;
+                        }
+                    </tbody>
+                    <tfoot class="table-light fw-bold">
+                        <tr>
+                            <td colspan="4" class="text-end">小計</td>
+                            <td class="text-end">$@Model.SubTotal.ToString("N0")</td>
+                            <td></td>
+                        </tr>
+                        @if (Model.ServiceCharge > 0)
+                        {
+                            <tr>
+                                <td colspan="4" class="text-end">服務費 (10%)</td>
+                                <td class="text-end">$@Model.ServiceCharge.ToString("N0")</td>
+                                <td></td>
+                            </tr>
+                        }
+                        @if (Model.Allowance > 0)
+                        {
+                            <tr class="text-danger">
+                                <td colspan="4" class="text-end">折扣</td>
+                                <td class="text-end">-$@Model.Allowance.ToString("N0")</td>
+                                <td></td>
+                            </tr>
+                        }
+                        <tr class="fs-5">
+                            <td colspan="4" class="text-end">總計</td>
+                            <td class="text-end text-success">$@Model.GrandTotal.ToString("N0")</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- 換桌 -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <form asp-action="ChangeTable" method="post" class="row g-2 align-items-end">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="orderNo" value="@Model.No" />
+                    <div class="col">
+                        <label class="form-label small mb-1">換桌</label>
+                        <input type="text" name="newTableNo" class="form-control" placeholder="輸入新桌號" maxlength="3" />
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-outline-secondary">換桌</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 操作按鈕 -->
+        <div class="d-flex gap-2">
+            <a asp-controller="Order" asp-action="Create" asp-route-tableNo="@Model.TableNo"
+               class="btn btn-warning flex-grow-1">
+                <i class="bi bi-plus-circle"></i> 繼續點餐
+            </a>
+            @if (Model.Status == "0")
+            {
+                <a asp-controller="Checkout" asp-action="Index" asp-route-orderNo="@Model.No"
+                   class="btn btn-success flex-grow-1">
+                    <i class="bi bi-cash-coin"></i> 結帳
+                </a>
+            }
+            <a asp-controller="Order" asp-action="Index" class="btn btn-outline-secondary">返回桌位</a>
+        </div>
+    </div>
+</div>

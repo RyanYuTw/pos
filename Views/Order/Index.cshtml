@@ -1,0 +1,51 @@
+@model IEnumerable<Pos.Models.TableSetting>
+@{
+    ViewData["Title"] = "點餐 - 選擇桌位";
+    var tableOrderMap = (Dictionary<string, string>)ViewBag.TableOrderMap;
+}
+
+<h5 class="mb-3"><i class="bi bi-grid-3x3-gap"></i> 桌位狀態</h5>
+
+<div class="row g-3">
+    @foreach (var table in Model)
+    {
+        var isOccupied = ((IEnumerable<string>)ViewBag.ActiveTables).Contains(table.No);
+        <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+            @if (isOccupied)
+            {
+                var orderNo = tableOrderMap.TryGetValue(table.No, out var no) ? no : "";
+                <div class="card border-danger text-center py-3 h-100 table-card occupied">
+                    <i class="bi bi-person-fill fs-3 text-danger"></i>
+                    <div class="fw-bold mt-1">@table.No</div>
+                    @if (table.Name != null) { <div class="small text-muted">@table.Name</div> }
+                    <div class="badge bg-danger mt-1">使用中</div>
+                    <a asp-controller="Order" asp-action="Detail"
+                       asp-route-id="@orderNo" class="stretched-link"></a>
+                </div>
+            }
+            else
+            {
+                <a asp-controller="Order" asp-action="Create"
+                   asp-route-tableNo="@table.No" class="text-decoration-none">
+                    <div class="card border-success text-center py-3 h-100 table-card available">
+                        <i class="bi bi-table fs-3 text-success"></i>
+                        <div class="fw-bold mt-1">@table.No</div>
+                        @if (table.Name != null) { <div class="small text-muted">@table.Name</div> }
+                        @if (table.SeatNum.HasValue)
+                        {
+                            <div class="small text-muted">@table.SeatNum 人座</div>
+                        }
+                        <div class="badge bg-success mt-1">空桌</div>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+<style>
+.table-card { cursor: pointer; transition: transform .15s; }
+.table-card:hover { transform: scale(1.04); }
+</style>
+}

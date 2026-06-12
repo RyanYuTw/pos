@@ -1,0 +1,86 @@
+@model Pos.Models.Orders
+@{
+    ViewData["Title"] = "收據";
+    var productNames = (Dictionary<string, string>)ViewBag.ProductNames;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card shadow" id="receipt">
+            <div class="card-body text-center pb-0">
+                <h4 class="fw-bold mb-0">收據</h4>
+                <div class="text-muted small mb-2">@Model.OrderDate.ToString("yyyy/MM/dd HH:mm")</div>
+                <div class="small mb-1">單號：@Model.No</div>
+                <div class="small mb-3">桌號：@Model.TableNo</div>
+                <hr />
+            </div>
+            <div class="card-body pt-0">
+                <table class="table table-sm">
+                    <thead><tr><th>商品</th><th class="text-end">數量</th><th class="text-end">金額</th></tr></thead>
+                    <tbody>
+                        @foreach (var d in Model.Details.Where(d => d.Status != "2" && d.Status != "R"))
+                        {
+                            <tr>
+                                <td>@(productNames.TryGetValue(d.ProductNo, out var rn) ? rn : d.ProductNo)</td>
+                                <td class="text-end">@d.Amount</td>
+                                <td class="text-end">$@(((d.DiscountPrice ?? 0) * d.Amount).ToString("N0"))</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="fw-bold">
+                        <tr>
+                            <td colspan="2" class="text-end border-0">小計</td>
+                            <td class="text-end border-0">$@Model.SubTotal.ToString("N0")</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="text-end border-0">服務費</td>
+                            <td class="text-end border-0">$@Model.ServiceCharge.ToString("N0")</td>
+                        </tr>
+                        @if (Model.Allowance > 0)
+                        {
+                            <tr class="text-danger">
+                                <td colspan="2" class="text-end border-0">折扣</td>
+                                <td class="text-end border-0">-$@Model.Allowance.ToString("N0")</td>
+                            </tr>
+                        }
+                        <tr class="fs-5 border-top">
+                            <td colspan="2" class="text-end">總計</td>
+                            <td class="text-end text-success">$@Model.GrandTotal.ToString("N0")</td>
+                        </tr>
+                        @if (Model.Cash.HasValue && Model.Cash > 0)
+                        {
+                            <tr>
+                                <td colspan="2" class="text-end border-0 text-muted small">現金</td>
+                                <td class="text-end border-0 text-muted small">$@Model.Cash.Value.ToString("N0")</td>
+                            </tr>
+                        }
+                    </tfoot>
+                </table>
+                <hr />
+                <p class="text-center text-muted small mb-0">感謝惠顧，歡迎再次光臨</p>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+            <button type="button" class="btn btn-outline-secondary flex-grow-1" onclick="window.print()">
+                <i class="bi bi-printer"></i> 列印
+            </button>
+            <a asp-controller="Checkout" asp-action="Return" asp-route-orderNo="@Model.No"
+               class="btn btn-outline-warning flex-grow-1">
+                <i class="bi bi-arrow-counterclockwise"></i> 退貨
+            </a>
+            <a asp-controller="Order" asp-action="Index" class="btn btn-success flex-grow-1">
+                <i class="bi bi-grid"></i> 返回桌位
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<style>
+@@media print {
+    nav, .d-flex { display: none !important; }
+    #receipt { box-shadow: none !important; border: none !important; }
+}
+</style>
+}

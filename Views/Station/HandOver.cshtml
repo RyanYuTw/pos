@@ -1,0 +1,183 @@
+@using Pos.Models
+@{
+    ViewData["Title"] = "交班";
+    var expenses = (IEnumerable<StationCash>)ViewBag.Expenses;
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-9">
+
+        <!-- 銷售摘要 -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="bi bi-arrow-left-right"></i> 交班報表
+                    <span class="fs-6 fw-normal ms-2 opacity-75">@ViewBag.HandOverNo</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center g-3">
+                    <div class="col-6 col-md-3">
+                        <div class="border rounded py-3 bg-light">
+                            <div class="text-muted small">總金額</div>
+                            <div class="fw-bold text-success fs-5">@ViewBag.GrandTotal?.ToString("N0")</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="border rounded py-3 bg-light">
+                            <div class="text-muted small">服務費</div>
+                            <div class="fw-bold">@ViewBag.ServiceCharge?.ToString("N0")</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="border rounded py-3 bg-light">
+                            <div class="text-muted small">折扣</div>
+                            <div class="fw-bold text-danger">@ViewBag.Allowance?.ToString("N0")</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="border rounded py-3 bg-light">
+                            <div class="text-muted small"><i class="bi bi-credit-card"></i> 刷卡</div>
+                            <div class="fw-bold">@ViewBag.CreditCard?.ToString("N0")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 現金結算 -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-cash-stack"></i> 現金結算</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center g-3 mb-3">
+                    <div class="col-4">
+                        <div class="border rounded py-2 bg-light">
+                            <div class="text-muted small"><i class="bi bi-coin"></i> 備用金（開帳）</div>
+                            <div class="fw-bold text-secondary">@ViewBag.OpeningCash?.ToString("N0")</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="border rounded py-2 bg-light">
+                            <div class="text-muted small"><i class="bi bi-cash"></i> 收現</div>
+                            <div class="fw-bold">@ViewBag.Cash?.ToString("N0")</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="border rounded py-2 @(((float)(ViewBag.NetCash ?? 0)) >= 0 ? "bg-warning" : "bg-danger bg-opacity-25")">
+                            <div class="text-muted small"><i class="bi bi-cash-stack"></i> 應繳現金</div>
+                            <div class="fw-bold fs-5">@ViewBag.NetCash?.ToString("N0")</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-muted small text-end">
+                    應繳現金 = 收現 − 業外支出 + 業外收入（備用金由接班人繼承，不計入）
+                </div>
+            </div>
+        </div>
+
+        <!-- 業外支出／收入明細 -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-list-ul"></i> 備用金使用明細</h6>
+                @if (ViewBag.ExpenseTotal > 0 || ViewBag.IncomeTotal > 0)
+                {
+                    <span class="small text-muted">
+                        支出 $@ViewBag.ExpenseTotal?.ToString("N0")
+                        @if ((float)(ViewBag.IncomeTotal ?? 0) > 0)
+                        { <text>／業外收入 $@ViewBag.IncomeTotal?.ToString("N0")</text> }
+                    </span>
+                }
+            </div>
+            <div class="card-body p-0">
+                @if (!expenses.Any())
+                {
+                    <div class="text-muted small p-3">尚無支出紀錄</div>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>類型</th>
+                                <th>說明</th>
+                                <th class="text-end">金額</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var e in expenses)
+                            {
+                                <tr>
+                                    <td>
+                                        @if (e.CashType == "1")
+                                        { <span class="badge bg-danger">支出</span> }
+                                        else
+                                        { <span class="badge bg-success">收入</span> }
+                                    </td>
+                                    <td>@(e.Description ?? "-")</td>
+                                    <td class="text-end @(e.CashType == "1" ? "text-danger" : "text-success")">
+                                        @(e.CashType == "1" ? "-" : "+")$@e.Amount.ToString("N0")
+                                    </td>
+                                    <td class="text-end">
+                                        <form asp-action="DeleteCash" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@e.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1">×</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+            <div class="card-footer bg-white">
+                <form asp-action="AddCash" method="post" class="row g-2 align-items-end">
+                    @Html.AntiForgeryToken()
+                    <div class="col-auto">
+                        <select name="cashType" class="form-select form-select-sm">
+                            <option value="1">支出</option>
+                            <option value="0">收入</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <input type="text" name="description" class="form-control form-control-sm"
+                               placeholder="說明（如：購買備品、雜費...）" maxlength="200" required />
+                    </div>
+                    <div class="col-auto">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">$</span>
+                            <input type="number" name="amount" class="form-control" style="width:90px"
+                                   min="1" step="1" placeholder="金額" required />
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-outline-primary btn-sm">新增</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 確認交班 -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form asp-action="HandOver" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label">接班人</label>
+                        <input type="text" name="receiver" class="form-control"
+                               placeholder="輸入接班人帳號或姓名（選填）" maxlength="20" />
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-secondary btn-lg flex-grow-1">
+                            <i class="bi bi-check2-circle"></i> 確認交班
+                        </button>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-lg">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>

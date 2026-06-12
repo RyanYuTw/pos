@@ -1,0 +1,46 @@
+@model IEnumerable<Pos.Models.StationHost>
+@{ ViewData["Title"] = "開帳"; }
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-power"></i> 開帳 - 選擇收銀機</h5>
+            </div>
+            <div class="card-body">
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger">@TempData["Error"]</div>
+                }
+                <form asp-action="Open" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">收銀機</label>
+                        <select name="stationNo" class="form-select form-select-lg" required>
+                            <option value="">-- 請選擇 --</option>
+                            @foreach (var host in Model)
+                            {
+                                <option value="@host.StationNo">@host.StationNo - @host.HostName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="bi bi-cash-coin"></i> 備用金（開帳預存現金）</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" name="openingCash" class="form-control form-control-lg"
+                                   min="0" step="1" value="0" placeholder="0" />
+                        </div>
+                        <div class="form-text">用於找零或雜費的預備現金，交班時會從現金總額中扣除</div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-power"></i> 開帳
+                        </button>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

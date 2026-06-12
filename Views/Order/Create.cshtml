@@ -1,0 +1,219 @@
+@model IEnumerable<Pos.Models.Product>
+@{
+    ViewData["Title"] = $"點餐 - 桌號 {ViewBag.TableNo}";
+    var kinds = (IEnumerable<Pos.Models.ProductKind>)ViewBag.Kinds;
+}
+
+<div class="row g-3">
+    <!-- 商品列表 -->
+    <div class="col-md-7">
+        <div class="d-flex align-items-center mb-2 gap-2">
+            <h5 class="mb-0"><i class="bi bi-basket"></i> 點餐 - 桌號 <span class="badge bg-warning text-dark">@ViewBag.TableNo</span></h5>
+        </div>
+
+        <!-- 種類篩選 -->
+        <div class="mb-3 d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary kind-filter active" data-kind="">全部</button>
+            @foreach (var k in kinds)
+            {
+                <button type="button" class="btn btn-sm btn-outline-primary kind-filter" data-kind="@k.No">@k.Name</button>
+            }
+        </div>
+
+        <!-- 商品格 - 使用 data attribute 傳值，避免 XSS -->
+        <div class="row g-2" id="productGrid">
+            @foreach (var p in Model)
+            {
+                <div class="col-6 col-sm-4 product-item" data-kind="@p.Kind">
+                    <div class="card h-100 product-card"
+                         data-no="@p.No"
+                         data-name="@p.Name"
+                         data-price="@p.DiscountPrice"
+                         data-orig="@p.Price">
+                        <div class="card-body text-center py-2 px-2">
+                            @if (!string.IsNullOrEmpty(p.Image))
+                            {
+                                <img src="~/images/@p.Image" class="img-fluid mb-1" style="height:60px;object-fit:cover;" alt="" />
+                            }
+                            else
+                            {
+                                <i class="bi bi-box-seam fs-3 text-secondary"></i>
+                            }
+                            <div class="small fw-semibold mt-1">@p.Name</div>
+                            <div class="text-danger fw-bold">$@p.DiscountPrice.ToString("N0")</div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- 購物車 -->
+    <div class="col-md-5">
+        <div class="card shadow-sm sticky-top" style="top:70px">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-cart3"></i> 已點項目</span>
+                <button type="button" class="btn btn-sm btn-outline-danger" id="clearCartBtn">清空</button>
+            </div>
+            <div class="card-body p-2" id="cartBody" style="max-height:320px;overflow-y:auto">
+                <div id="emptyCart" class="text-center text-muted py-3">尚未點餐</div>
+                <table class="table table-sm mb-0 d-none" id="cartTable">
+                    <thead><tr><th>商品</th><th>數量</th><th>小計</th><th></th></tr></thead>
+                    <tbody id="cartRows"></tbody>
+                </table>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between fw-bold mb-2">
+                    <span>合計</span>
+                    <span id="cartTotal" class="text-success">$0</span>
+                </div>
+                <form id="orderForm" asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="TableNo" value="@ViewBag.TableNo" />
+                    <div id="cartInputs"></div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-warning fw-bold" id="submitBtn" disabled>
+                            <i class="bi bi-send"></i> 送出點餐
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">返回桌位</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const cart = new Map();
+
+function addToCart(no, name, price) {
+    if (cart.has(no)) {
+        cart.get(no).amount += 1;
+    } else {
+        cart.set(no, { no, name, price, amount: 1 });
+    }
+    renderCart();
+}
+
+function removeFromCart(no) {
+    cart.delete(no);
+    renderCart();
+}
+
+function changeAmount(no, delta) {
+    const item = cart.get(no);
+    if (!item) return;
+    item.amount += delta;
+    if (item.amount <= 0) cart.delete(no);
+    renderCart();
+}
+
+function renderCart() {
+    const tbody = document.getElementById('cartRows');
+    const inputs = document.getElementById('cartInputs');
+    const empty = document.getElementById('emptyCart');
+    const table = document.getElementById('cartTable');
+    const totalEl = document.getElementById('cartTotal');
+    const submitBtn = document.getElementById('submitBtn');
+
+    tbody.textContent = '';
+    inputs.textContent = '';
+    let total = 0, idx = 0;
+
+    cart.forEach((item, no) => {
+        const sub = item.price * item.amount;
+        total += sub;
+
+        // 安全建立 TR
+        const tr = document.createElement('tr');
+
+        const tdName = document.createElement('td');
+        tdName.textContent = item.name;
+        tr.appendChild(tdName);
+
+        const tdQty = document.createElement('td');
+        const btnMinus = document.createElement('button');
+        btnMinus.type = 'button';
+        btnMinus.className = 'btn btn-sm btn-outline-secondary py-0 px-1';
+        btnMinus.textContent = '−';
+        btnMinus.addEventListener('click', () => changeAmount(no, -1));
+        const qtySpan = document.createElement('span');
+        qtySpan.textContent = ` ${item.amount} `;
+        const btnPlus = document.createElement('button');
+        btnPlus.type = 'button';
+        btnPlus.className = 'btn btn-sm btn-outline-secondary py-0 px-1';
+        btnPlus.textContent = '＋';
+        btnPlus.addEventListener('click', () => changeAmount(no, 1));
+        tdQty.appendChild(btnMinus);
+        tdQty.appendChild(qtySpan);
+        tdQty.appendChild(btnPlus);
+        tr.appendChild(tdQty);
+
+        const tdSub = document.createElement('td');
+        tdSub.textContent = '$' + sub.toFixed(0);
+        tr.appendChild(tdSub);
+
+        const tdDel = document.createElement('td');
+        const btnDel = document.createElement('button');
+        btnDel.type = 'button';
+        btnDel.className = 'btn btn-sm btn-outline-danger py-0 px-1';
+        btnDel.textContent = '×';
+        btnDel.addEventListener('click', () => removeFromCart(no));
+        tdDel.appendChild(btnDel);
+        tr.appendChild(tdDel);
+
+        tbody.appendChild(tr);
+
+        // Hidden inputs
+        const mkInput = (name, value) => {
+            const el = document.createElement('input');
+            el.type = 'hidden';
+            el.name = name;
+            el.value = value;
+            return el;
+        };
+        inputs.appendChild(mkInput(`Items[${idx}].ProductNo`, no));
+        inputs.appendChild(mkInput(`Items[${idx}].ProductName`, item.name));
+        inputs.appendChild(mkInput(`Items[${idx}].Amount`, item.amount));
+        inputs.appendChild(mkInput(`Items[${idx}].DiscountPrice`, item.price));
+        idx++;
+    });
+
+    const hasItems = cart.size > 0;
+    empty.classList.toggle('d-none', hasItems);
+    table.classList.toggle('d-none', !hasItems);
+    totalEl.textContent = '$' + total.toFixed(0);
+    submitBtn.disabled = !hasItems;
+}
+
+// 商品格點擊
+document.querySelectorAll('.product-card').forEach(card => {
+    card.addEventListener('click', () => {
+        addToCart(card.dataset.no, card.dataset.name, parseFloat(card.dataset.price));
+    });
+});
+
+// 清空購物車
+document.getElementById('clearCartBtn').addEventListener('click', () => {
+    cart.clear();
+    renderCart();
+});
+
+// 種類篩選
+document.querySelectorAll('.kind-filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.kind-filter').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const kind = btn.dataset.kind;
+        document.querySelectorAll('.product-item').forEach(item => {
+            item.style.display = (!kind || item.dataset.kind === kind) ? '' : 'none';
+        });
+    });
+});
+</script>
+<style>
+.product-card { cursor: pointer; transition: transform .1s; }
+.product-card:hover { transform: scale(1.03); background: #fffbea; }
+</style>
+}

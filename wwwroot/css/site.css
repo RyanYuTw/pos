@@ -1,0 +1,33 @@
+/* POS 系統樣式 */
+.card-hover {
+    transition: transform .15s, box-shadow .15s;
+    cursor: pointer;
+}
+.card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+}
+
+/* 前台點餐桌位圖 */
+.table-cell {
+    width: 90px;
+    height: 90px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: opacity .15s;
+}
+.table-cell.occupied { background: #ffc107; }
+.table-cell.available { background: #198754; color: #fff; }
+.table-cell:hover { opacity: .85; }
+
+/* 觸控友善按鈕 */
+@media (max-width: 768px) {
+    .btn-touch {
+        min-height: 56px;
+        font-size: 1.1rem;
+    }
+}

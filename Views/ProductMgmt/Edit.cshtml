@@ -1,0 +1,97 @@
+@model Pos.Models.Product
+@{
+    ViewData["Title"] = "編輯商品";
+    var kinds = (IEnumerable<Pos.Models.ProductKind>)ViewBag.Kinds;
+    var sizes = (IEnumerable<Pos.Models.ProductSize>)ViewBag.Sizes;
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="bi bi-pencil-square"></i> 編輯商品</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="Edit" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="row g-3">
+                        <div class="col-4">
+                            <label asp-for="No" class="form-label">商品編號</label>
+                            <input asp-for="No" class="form-control font-monospace" readonly />
+                        </div>
+                        <div class="col-8">
+                            <label asp-for="Name" class="form-label">商品名稱</label>
+                            <input asp-for="Name" class="form-control" maxlength="50" required />
+                        </div>
+                        <div class="col-4">
+                            <label asp-for="Kind" class="form-label">種類</label>
+                            <select asp-for="Kind" class="form-select"
+                                    asp-items="@(new SelectList(kinds, "No", "Name"))">
+                                <option value="">-- 請選擇 --</option>
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <label asp-for="Size" class="form-label">規格</label>
+                            <select asp-for="Size" class="form-select"
+                                    asp-items="@(new SelectList(sizes, "Code", "Name"))">
+                                <option value="">-- 請選擇 --</option>
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <label asp-for="Unit" class="form-label">單位</label>
+                            <input asp-for="Unit" class="form-control" maxlength="50" />
+                        </div>
+                        <div class="col-6">
+                            <label asp-for="Price" class="form-label">定價</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input asp-for="Price" type="number" class="form-control" min="0" step="1" required />
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label asp-for="DiscountPrice" class="form-label">折扣價</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input asp-for="DiscountPrice" type="number" class="form-control" min="0" step="1" required />
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Description" class="form-label">說明</label>
+                            <textarea asp-for="Description" class="form-control" rows="2" maxlength="500"></textarea>
+                        </div>
+                        <div class="col-12 d-flex gap-3 flex-wrap">
+                            <div class="form-check">
+                                <input asp-for="Shelfing" type="checkbox" class="form-check-input" />
+                                <label asp-for="Shelfing" class="form-check-label">上架</label>
+                            </div>
+                            <div class="form-check">
+                                <input asp-for="Promotion" type="checkbox" class="form-check-input" />
+                                <label asp-for="Promotion" class="form-check-label">促銷</label>
+                            </div>
+                            <div class="form-check">
+                                <input asp-for="Mix" type="checkbox" class="form-check-input" />
+                                <label asp-for="Mix" class="form-check-label">可混搭</label>
+                            </div>
+                            <div class="form-check">
+                                <input asp-for="Stock" type="checkbox" class="form-check-input" />
+                                <label asp-for="Stock" class="form-check-label">管理庫存</label>
+                            </div>
+                        </div>
+                        <div class="col-12 text-muted small">
+                            最後更新：@Model.UpdateTime.ToString("yyyy/MM/dd HH:mm") by @Model.Updater
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="submit" class="btn btn-secondary flex-grow-1">
+                            <i class="bi bi-check2"></i> 更新
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

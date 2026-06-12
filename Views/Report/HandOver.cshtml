@@ -1,0 +1,72 @@
+@model IEnumerable<Pos.Models.HandOver>
+@{ ViewData["Title"] = "交班表"; }
+
+<h5 class="mb-3"><i class="bi bi-arrow-left-right"></i> 交班表</h5>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-auto">
+        <label class="form-label small mb-1">開始日期</label>
+        <input type="date" name="startDate" class="form-control form-control-sm"
+               value="@ViewBag.StartDate?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-auto">
+        <label class="form-label small mb-1">結束日期</label>
+        <input type="date" name="endDate" class="form-control form-control-sm"
+               value="@ViewBag.EndDate?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-primary btn-sm">查詢</button>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">此區間無交班資料</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>交班號</th>
+                    <th>交班時間</th>
+                    <th class="text-end">總金額</th>
+                    <th class="text-end">服務費</th>
+                    <th class="text-end">折扣</th>
+                    <th class="text-end">現金</th>
+                    <th class="text-end">刷卡</th>
+                    <th>交班人</th>
+                    <th>接班人</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var h in Model)
+                {
+                    <tr>
+                        <td class="font-monospace small">@h.No</td>
+                        <td>@h.HandoverDate.ToString("MM/dd HH:mm")</td>
+                        <td class="text-end fw-bold text-success">$@h.GrandTotal.ToString("N0")</td>
+                        <td class="text-end">$@h.ServiceCharge.ToString("N0")</td>
+                        <td class="text-end text-danger">$@h.Allowance.ToString("N0")</td>
+                        <td class="text-end">$@(h.Cash?.ToString("N0") ?? "-")</td>
+                        <td class="text-end">$@(h.CreditCard?.ToString("N0") ?? "-")</td>
+                        <td>@h.HandOverUser</td>
+                        <td>@h.Receiver</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot class="table-light fw-bold">
+                <tr>
+                    <td colspan="2">合計</td>
+                    <td class="text-end text-success">$@Model.Sum(h => h.GrandTotal).ToString("N0")</td>
+                    <td class="text-end">$@Model.Sum(h => h.ServiceCharge).ToString("N0")</td>
+                    <td class="text-end text-danger">$@Model.Sum(h => h.Allowance).ToString("N0")</td>
+                    <td class="text-end">$@Model.Sum(h => h.Cash ?? 0).ToString("N0")</td>
+                    <td class="text-end">$@Model.Sum(h => h.CreditCard ?? 0).ToString("N0")</td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+}

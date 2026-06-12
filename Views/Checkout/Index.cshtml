@@ -1,0 +1,126 @@
+@model Pos.Models.Orders
+@{
+    ViewData["Title"] = $"結帳 - {Model.TableNo}";
+    var payments = (IEnumerable<Pos.Models.Payment>)ViewBag.Payments;
+    var productNames = (Dictionary<string, string>)ViewBag.ProductNames;
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <h5 class="mb-3"><i class="bi bi-cash-coin"></i> 結帳
+            <span class="badge bg-warning text-dark ms-2">桌號 @Model.TableNo</span>
+        </h5>
+
+        <!-- 消費摘要 -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">消費明細</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        @foreach (var d in Model.Details.Where(d => d.Status != "2" && d.Status != "R"))
+                        {
+                            <tr>
+                                <td>@(productNames.TryGetValue(d.ProductNo, out var pn) ? pn : d.ProductNo)</td>
+                                <td class="text-end">$@(d.DiscountPrice?.ToString("N0"))</td>
+                                <td class="text-end">× @d.Amount</td>
+                                <td class="text-end">$@(((d.DiscountPrice ?? 0) * d.Amount).ToString("N0"))</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="fw-bold table-light">
+                        <tr>
+                            <td colspan="3" class="text-end">小計</td>
+                            <td class="text-end">$@Model.SubTotal.ToString("N0")</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" class="text-end">服務費</td>
+                            <td class="text-end">$@Model.ServiceCharge.ToString("N0")</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- 付款 -->
+        <form asp-action="Process" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="OrderNo" value="@Model.No" />
+
+            <div class="card shadow-sm mb-3">
+                <div class="card-header">付款方式</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label"><i class="bi bi-cash"></i> 現金</label>
+                            <input type="number" name="Cash" class="form-control" min="0" step="1" placeholder="0" id="cashInput" />
+                            <div class="mt-1 small" id="changeRow" style="display:none">
+                                找零：<span class="fw-bold text-primary fs-6" id="changeAmount">$0</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label"><i class="bi bi-credit-card"></i> 刷卡</label>
+                            <input type="number" name="CreditCard" class="form-control" min="0" step="1" placeholder="0" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label"><i class="bi bi-star"></i> 點數折抵</label>
+                            <input type="number" name="Point" class="form-control" min="0" step="1" placeholder="0" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label"><i class="bi bi-ticket-perforated"></i> 優惠券</label>
+                            <input type="number" name="Coupons" class="form-control" min="0" step="1" placeholder="0" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label"><i class="bi bi-scissors"></i> 折扣</label>
+                            <input type="number" name="Allowance" class="form-control" min="0" step="1" placeholder="0" id="allowanceInput" />
+                        </div>
+                        <div class="col-6 d-flex align-items-end">
+                            <div class="w-100">
+                                <div class="text-muted small">應收金額</div>
+                                <div class="fs-4 fw-bold text-success" id="grandTotal">
+                                    $@Model.GrandTotal.ToString("N0")
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success btn-lg flex-grow-1">
+                    <i class="bi bi-check2-circle"></i> 確認結帳
+                </button>
+                <a asp-controller="Order" asp-action="Detail" asp-route-id="@Model.No"
+                   class="btn btn-outline-secondary btn-lg">返回</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const baseTotal = @(((double)(Model.SubTotal + Model.ServiceCharge)).ToString(System.Globalization.CultureInfo.InvariantCulture));
+let currentGrand = baseTotal;
+
+function updateGrand() {
+    const allow = parseFloat(document.getElementById('allowanceInput').value) || 0;
+    currentGrand = Math.max(0, baseTotal - allow);
+    document.getElementById('grandTotal').textContent = '$' + currentGrand.toFixed(0);
+    updateChange();
+}
+
+function updateChange() {
+    const cash = parseFloat(document.getElementById('cashInput').value) || 0;
+    const change = cash - currentGrand;
+    const row = document.getElementById('changeRow');
+    if (cash > 0 && change >= 0) {
+        document.getElementById('changeAmount').textContent = '$' + change.toFixed(0);
+        row.style.display = '';
+    } else {
+        row.style.display = 'none';
+    }
+}
+
+document.getElementById('allowanceInput').addEventListener('input', updateGrand);
+document.getElementById('cashInput').addEventListener('input', updateChange);
+</script>
+}

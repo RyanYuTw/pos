@@ -1,0 +1,88 @@
+@model IEnumerable<Pos.Models.Product>
+@{
+    ViewData["Title"] = "商品管理";
+    var kindMap = ((IEnumerable<Pos.Models.ProductKind>)ViewBag.Kinds)
+        .ToDictionary(k => k.No, k => k.Name);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0"><i class="bi bi-box-seam"></i> 商品管理</h5>
+    <a asp-action="Create" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus"></i> 新增商品
+    </a>
+</div>
+
+<!-- 搜尋 -->
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <select name="kind" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">全部種類</option>
+            @foreach (var k in (IEnumerable<Pos.Models.ProductKind>)ViewBag.Kinds)
+            {
+                <option value="@k.No" selected="@(Context.Request.Query["kind"] == k.No ? "selected" : null)">@k.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col">
+        <input type="text" name="q" class="form-control form-control-sm"
+               placeholder="搜尋商品名稱或編號…"
+               value="@Context.Request.Query["q"]" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-primary btn-sm">搜尋</button>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">清除</a>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>編號</th>
+                <th>名稱</th>
+                <th>種類</th>
+                <th>規格</th>
+                <th class="text-end">定價</th>
+                <th class="text-end">折扣價</th>
+                <th>上架</th>
+                <th>促銷</th>
+                <th>更新</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td class="font-monospace small">@p.No</td>
+                    <td>@p.Name</td>
+                    <td>@(p.Kind != null && kindMap.TryGetValue(p.Kind, out var kname) ? kname : p.Kind)</td>
+                    <td class="small text-muted">@p.Size @p.Unit</td>
+                    <td class="text-end">$@p.Price.ToString("N0")</td>
+                    <td class="text-end text-danger">$@p.DiscountPrice.ToString("N0")</td>
+                    <td>
+                        @if (p.Shelfing)
+                        { <span class="badge bg-success">上架</span> }
+                        else
+                        { <span class="badge bg-secondary">下架</span> }
+                    </td>
+                    <td>
+                        @if (p.Promotion)
+                        { <span class="badge bg-warning text-dark">促銷</span> }
+                    </td>
+                    <td class="small text-muted">@p.UpdateTime.ToString("MM/dd")</td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@p.No"
+                           class="btn btn-sm btn-outline-secondary py-0">編輯</a>
+                        <form asp-action="Delete" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@p.No" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger py-0"
+                                    onclick="return confirm('確定刪除商品「@p.Name」？')">刪除</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
