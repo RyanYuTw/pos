@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-PROJECT_DIR="$(cd "$(dirname "$0")/Pos" && pwd)"
+PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PORT=8003
 URL="http://localhost:$PORT"
 MSSQL_CONTAINER="mssql_server"
@@ -16,13 +16,12 @@ if [ "$CONTAINER_STATUS" = "running" ]; then
 elif [ "$CONTAINER_STATUS" = "exited" ] || [ "$CONTAINER_STATUS" = "created" ]; then
   echo "   啟動 MSSQL 容器..."
   docker start "$MSSQL_CONTAINER"
-  echo "   等待 MSSQL 就緒..."
+  echo "   等待 MSSQL 就緒（port 1433）..."
   for i in {1..30}; do
-    if docker exec "$MSSQL_CONTAINER" /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "${MSSQL_SA_PASSWORD:?請設定 MSSQL_SA_PASSWORD 環境變數}" -Q "SELECT 1" &>/dev/null; then
-      break
-    fi
+    nc -z localhost 1433 2>/dev/null && break
     sleep 2
   done
+  sleep 2
   echo "   MSSQL 就緒"
 else
   echo "❌ 找不到 MSSQL 容器（$MSSQL_CONTAINER），請先建立容器。"
