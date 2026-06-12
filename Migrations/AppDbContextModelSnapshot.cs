@@ -1284,8 +1284,8 @@ namespace Pos.Migrations
 
                     b.Property<string>("Password")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(72)
+                        .HasColumnType("nvarchar(72)");
 
                     b.Property<string>("Status")
                         .IsRequired()

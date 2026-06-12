@@ -12,8 +12,8 @@ using Pos.Data;
 namespace Pos.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260612022323_HashPasswords")]
-    partial class HashPasswords
+    [Migration("20260612022858_ExpandPasswordAndHashPasswords")]
+    partial class ExpandPasswordAndHashPasswords
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1287,8 +1287,8 @@ namespace Pos.Migrations
 
                     b.Property<string>("Password")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(72)
+                        .HasColumnType("nvarchar(72)");
 
                     b.Property<string>("Status")
                         .IsRequired()

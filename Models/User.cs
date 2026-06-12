@@ -10,7 +10,7 @@ public class User
     [MaxLength(20)]
     public string UserId { get; set; } = default!;
 
-    [Required, MaxLength(50)]
+    [Required, MaxLength(72)]
     public string Password { get; set; } = default!;
 
     [Required, MaxLength(4)]
