@@ -6,7 +6,7 @@ using Pos.Models;
 
 namespace Pos.Controllers.BackOffice;
 
-[Authorize]
+[Authorize(Policy = "AdminOnly")]
 public class ProductMgmtController : Controller
 {
     private readonly AppDbContext _db;

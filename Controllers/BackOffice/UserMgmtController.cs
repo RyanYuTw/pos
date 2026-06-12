@@ -6,7 +6,7 @@ using Pos.Models;
 
 namespace Pos.Controllers.BackOffice;
 
-[Authorize]
+[Authorize(Policy = "AdminOnly")]
 public class UserMgmtController : Controller
 {
     private readonly AppDbContext _db;
@@ -39,6 +39,7 @@ public class UserMgmtController : Controller
             return View(model);
         }
 
+        model.Password = BCrypt.Net.BCrypt.HashPassword(model.Password);
         model.Updater = User.Identity!.Name!;
         model.UpdateTime = DateTime.Now;
         model.Status = "0";

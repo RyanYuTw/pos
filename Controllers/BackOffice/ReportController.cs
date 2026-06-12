@@ -6,7 +6,7 @@ using Pos.ViewModels;
 
 namespace Pos.Controllers.BackOffice;
 
-[Authorize]
+[Authorize(Policy = "ManagerOrAbove")]
 public class ReportController : Controller
 {
     private readonly AppDbContext _db;

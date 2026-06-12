@@ -101,7 +101,7 @@ public class AppDbContext : DbContext
             new User
             {
                 UserId = "admin",
-                Password = "admin123",
+                Password = "$2b$11$iiXbduXveVZcjXrVEfEX2.8uWRJkROdFjx8C351b17bnTFYtehGzu",
                 EmployeeNo = "0001",
                 Name = "管理者",
                 UserGroup = "管理者",

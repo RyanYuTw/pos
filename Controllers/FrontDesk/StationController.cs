@@ -135,7 +135,11 @@ public class StationController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteCash(int id)
     {
-        var item = await _db.StationCashes.FindAsync(id);
+        var log = await GetCurrentLog();
+        if (log == null) return RedirectToAction("Open");
+
+        var item = await _db.StationCashes.FirstOrDefaultAsync(
+            c => c.Id == id && c.HandOverNo == log.HandOverNo && c.StationNo == log.StationNo);
         if (item != null) _db.StationCashes.Remove(item);
         await _db.SaveChangesAsync();
         return RedirectToAction("HandOver");

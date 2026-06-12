@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -15,6 +16,7 @@ public class AccountController : Controller
     public AccountController(AppDbContext db) => _db = db;
 
     [HttpGet]
+    [AllowAnonymous]
     public IActionResult Login(string? returnUrl = null)
     {
         ViewBag.ReturnUrl = returnUrl;
@@ -22,17 +24,16 @@ public class AccountController : Controller
     }
 
     [HttpPost]
+    [AllowAnonymous]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
     {
         if (!ModelState.IsValid) return View(model);
 
         var user = await _db.Users
-            .FirstOrDefaultAsync(u => u.UserId == model.UserId
-                                   && u.Password == model.Password
-                                   && u.Status != "2");
+            .FirstOrDefaultAsync(u => u.UserId == model.UserId && u.Status != "2");
 
-        if (user == null)
+        if (user == null || !BCrypt.Net.BCrypt.Verify(model.Password, user.Password))
         {
             ModelState.AddModelError("", "帳號或密碼錯誤");
             return View(model);
@@ -74,25 +75,27 @@ public class AccountController : Controller
         return RedirectToAction("Login");
     }
 
+    [Authorize]
     [HttpGet]
     public IActionResult ChangePassword() => View();
 
+    [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
     {
         if (!ModelState.IsValid) return View(model);
 
-        var userId = User.Identity?.Name;
+        var userId = User.Identity!.Name!;
         var user = await _db.Users.FindAsync(userId);
-        if (user == null || user.Password != model.OldPassword)
+        if (user == null || !BCrypt.Net.BCrypt.Verify(model.OldPassword, user.Password))
         {
             ModelState.AddModelError("", "舊密碼不正確");
             return View(model);
         }
 
-        user.Password = model.NewPassword;
-        user.Updater = userId!;
+        user.Password = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
+        user.Updater = userId;
         user.UpdateTime = DateTime.Now;
         user.Status = "1";
         await _db.SaveChangesAsync();

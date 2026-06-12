@@ -9,6 +9,14 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireClaim("UserGroup", "管理者"));
+    options.AddPolicy("ManagerOrAbove", policy =>
+        policy.RequireClaim("UserGroup", "管理者", "班長"));
+});
+
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
