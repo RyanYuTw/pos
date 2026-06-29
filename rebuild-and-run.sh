@@ -37,7 +37,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "▶ 啟動應用程式（port $PORT）..."
-dotnet run --configuration Debug --no-build --no-launch-profile --urls "http://localhost:$PORT" &
+ASPNETCORE_ENVIRONMENT=Development dotnet run --configuration Debug --no-build --no-launch-profile --urls "http://localhost:$PORT" &
 APP_PID=$!
 
 echo "▶ 等待網站啟動..."
