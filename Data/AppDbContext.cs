@@ -109,6 +109,18 @@ public class AppDbContext : DbContext
                 Updater = "system",
                 UpdateTime = new DateTime(2026, 1, 1),
                 Status = "0"
+            },
+            new User
+            {
+                UserId = "demo",
+                Password = "$2b$11$LQ/G.1mJraiSxXjlC8fmLOId22mezggL3EzWCquvb7AwOYb2ay3x2",
+                EmployeeNo = "9999",
+                Name = "Demo",
+                UserGroup = "管理者",
+                UserLogin = false,
+                Updater = "system",
+                UpdateTime = new DateTime(2026, 1, 1),
+                Status = "1"
             }
         );
 
